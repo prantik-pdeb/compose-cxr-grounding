@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="COMPOSE studies compositionality and image-dependent evidence in medical phrase grounding for chest X-rays.">
+  <title>COMPOSE | Compositional Medical Phrase Grounding</title>
+
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fff;
+      --surface: #f7f8fa;
+      --surface-2: #eef2f7;
+      --text: #172033;
+      --muted: #5c6678;
+      --border: #dce2eb;
+      --accent: #2457c5;
+      --accent-soft: #eaf0ff;
+      --green: #19734b;
+      --green-soft: #eaf7ef;
+      --amber: #825b0b;
+      --amber-soft: #fff6df;
+      --shadow: 0 8px 30px rgba(20, 35, 65, .06);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #10141c;
+        --surface: #171d28;
+        --surface-2: #202939;
+        --text: #edf1f7;
+        --muted: #a8b3c4;
+        --border: #303b4c;
+        --accent: #91b0ff;
+        --accent-soft: #1b2c4f;
+        --green: #82d3a8;
+        --green-soft: #173727;
+        --amber: #f1cb70;
+        --amber-soft: #382d14;
+        --shadow: 0 8px 30px rgba(0, 0, 0, .18);
+      }
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+        BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 16px;
+      line-height: 1.7;
+    }
+
+    a { color: var(--accent); }
+
+    .wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 34px 26px 70px;
+    }
+
+    .topline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 48px;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: .08em;
+      font-size: 13px;
+    }
+
+    .venue {
+      color: var(--accent);
+      border: 1px solid var(--border);
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 850px;
+      margin: 0;
+      font-size: clamp(30px, 5vw, 47px);
+      line-height: 1.13;
+      letter-spacing: -.035em;
+    }
+
+    .subtitle {
+      margin: 19px 0 24px;
+      color: var(--muted);
+      font-size: clamp(17px, 2.3vw, 21px);
+      max-width: 800px;
+      line-height: 1.5;
+    }
+
+    .authors {
+      margin: 0 0 8px;
+      font-size: 15px;
+      font-weight: 650;
+      line-height: 1.8;
+    }
+
+    .affiliations {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    sup { font-size: .72em; }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 27px 0 36px;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 15px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 700;
+      background: var(--bg);
+    }
+
+    .button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .button.disabled {
+      color: var(--muted);
+      cursor: not-allowed;
+      opacity: .75;
+    }
+
+    .button:hover:not(.disabled) {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-note {
+      padding: 18px 20px;
+      background: var(--accent-soft);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      border-radius: 10px;
+    }
+
+    .hero-note strong { color: var(--accent); }
+
+    .section { margin-top: 56px; }
+
+    h2 {
+      font-size: 24px;
+      line-height: 1.3;
+      letter-spacing: -.02em;
+      margin: 0 0 16px;
+    }
+
+    h3 {
+      font-size: 17px;
+      line-height: 1.4;
+      margin: 0 0 8px;
+    }
+
+    p { margin: 0 0 15px; }
+
+    .muted { color: var(--muted); }
+
+    .diagram {
+      margin-top: 22px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .diagram-label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .11em;
+      font-weight: 800;
+      margin-bottom: 13px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr .8fr 1.05fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .pipe-card {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px;
+      text-align: center;
+    }
+
+    .pipe-card strong {
+      display: block;
+      font-size: 13px;
+      margin-bottom: 7px;
+    }
+
+    .pipe-card span {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .phrase-parts {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 5px;
+      margin-top: 7px;
+    }
+
+    .phrase-parts span {
+      border: 1px solid var(--border);
+      background: var(--bg);
+      padding: 3px 6px;
+      border-radius: 5px;
+      font-size: 10px;
+    }
+
+    .result-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 10px;
+      background: var(--green-soft);
+      border: 1px solid var(--border);
+    }
+
+    .result-number {
+      color: var(--green);
+      font-size: 32px;
+      font-weight: 850;
+      line-height: 1.15;
+      display: block;
+    }
+
+    .result-label {
+      color: var(--muted);
+      font-size: 13px;
+      display: block;
+      margin-top: 4px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--bg);
+    }
+
+    .card p {
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 27px;
+      height: 27px;
+      border-radius: 7px;
+      margin-bottom: 12px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .callout {
+      margin: 20px 0;
+      padding: 15px 18px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 14px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      min-width: 540px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .tag {
+      display: inline-block;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 3px 8px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .code {
+      padding: 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      white-space: pre;
+    }
+
+    footer {
+      margin-top: 64px;
+      padding-top: 25px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+      .wrap { padding: 25px 17px 50px; }
+      .topline { margin-bottom: 35px; }
+      .pipeline { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr; }
+      .diagram { padding: 14px; }
+      .section { margin-top: 44px; }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="wrap">
+
+    <div class="topline">
+      <div class="brand">COMPOSE PROJECT</div>
+      <div class="venue">ISBI 2027 · Project page</div>
+    </div>
+
+    <header>
+      <h1>COMPOSE: Compositional Medical Phrase Grounding</h1>
+
+      <p class="subtitle">
+        Investigating whether chest X-ray grounding models follow
+        the image and the complete clinical phrase—or rely on
+        recurring anatomical priors.
+      </p>
+
+      <p class="authors">
+        Shreya Gupta<sup>1,*</sup>,
+        Aashritha Chaparala<sup>1,*</sup>,
+        Prantik Deb<sup>1,4,*</sup>,<br>
+        T. Rajani<sup>2</sup>,
+        N. Ramakrishna<sup>2</sup>,
+        Anu Kapoor<sup>2</sup>,
+        Raju S. Bapi<sup>1</sup>
+      </p>
+
+      <p class="affiliations">
+        <sup>1</sup> IIIT Hyderabad, India &nbsp;·&nbsp;
+        <sup>2</sup> NIMS, Hyderabad, India &nbsp;·&nbsp;
+        <sup>4</sup> University of Strasbourg, France<br>
+        <sup>*</sup> Equal contribution
+      </p>
+
+      <div class="actions">
+        <span class="button disabled" aria-disabled="true">
+          Paper · coming soon
+        </span>
+
+        <a class="button primary"
+           href="https://github.com/prantik-pdeb/compose-cxr-grounding"
+           target="_blank" rel="noopener noreferrer">
+          Code repository
+        </a>
+
+        <span class="button disabled" aria-disabled="true">
+          Model · not yet linked
+        </span>
+      </div>
+    </header>
+
+    <div class="hero-note">
+      <strong>Central question.</strong>
+      Can a model achieve plausible localisation by exploiting
+      recurring spatial patterns in the training set, without
+      sufficiently using the test image or the complete clinical
+      phrase? COMPOSE studies this possibility with explicit
+      diagnostics for image dependence and compositional consistency.
+    </div>
+
+    <section class="section" id="abstract">
+      <h2>Abstract</h2>
+
+      <p>
+        Medical phrase grounding localises radiological findings
+        described in text within a corresponding image. Standard
+        localisation metrics evaluate predicted boxes against
+        reference annotations, but overlap alone does not establish
+        whether a model's prediction is conditioned on the image,
+        the pathology, the anatomy, and laterality together. We study
+        this distinction in chest X-ray grounding, focusing on the
+        possibility that recurring spatial patterns in the training
+        data act as shortcuts. COMPOSE brings together training-set
+        spatial-prior baselines, image-swap sensitivity, truth-checked
+        phrase interventions, and left–right flip equivariance. We
+        also investigate a displacement-based training objective and
+        a Binding Score intended to summarise complementary aspects
+        of localisation and image dependence. The project aims to
+        make compositional grounding failures more observable and
+        evaluation more informative than overlap metrics alone.
+      </p>
+    </section>
+
+    <section class="section" id="overview">
+      <h2>Problem overview</h2>
+
+      <p>
+        A phrase such as <em>“right lower lobe consolidation”</em>
+        combines pathology, anatomical location, and laterality.
+        A model should localise the described finding in the specific
+        radiograph—not merely return a region that is often associated
+        with that phrase or class.
+      </p>
+
+      <div class="diagram" role="img"
+           aria-label="Conceptual COMPOSE workflow from phrase and radiograph to grounding and diagnostic evaluation.">
+
+        <div class="diagram-label">
+          COMPOSE at a glance · conceptual workflow
+        </div>
+
+        <div class="pipeline">
+          <div class="pipe-card">
+            <strong>Clinical phrase</strong>
+            <span>“right lower lobe consolidation”</span>
+            <div class="phrase-parts">
+              <span>Pathology</span>
+              <span>Anatomy</span>
+              <span>Laterality</span>
+            </div>
+          </div>
+
+          <div class="pipe-card">
+            <strong>Input radiograph</strong>
+            <span>Image evidence for this patient and this phrase</span>
+          </div>
+
+          <div class="pipe-card">
+            <strong>Grounding model</strong>
+            <span>Predict one or more regions—or abstain when appropriate</span>
+          </div>
+
+          <div class="pipe-card">
+            <strong>Diagnostic evaluation</strong>
+            <span>Spatial prior · image swap · phrase edits · flip test</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Important distinction:</strong>
+        an anatomy-prior baseline is not necessarily independent of
+        every input variable. A class-conditional mean box uses the
+        class label, but does not inspect the test image pixels to
+        determine the location.
+      </div>
+    </section>
+
+    <section class="section" id="motivation">
+      <h2>Why evaluate compositionality?</h2>
+
+      <div class="grid-2">
+        <article class="card">
+          <div class="num">01</div>
+          <h3>Overlap is not the whole story</h3>
+          <p>
+            A predicted box may overlap a reference box because
+            annotations are spatially concentrated. That overlap
+            alone does not establish that the model used the visual
+            evidence in the particular image.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">02</div>
+          <h3>The phrase has multiple components</h3>
+          <p>
+            Pathology, anatomy, and laterality jointly constrain
+            the target. Changing one component should lead to a
+            response consistent with the image and the validity
+            of the modified phrase.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">03</div>
+          <h3>Groundability matters</h3>
+          <p>
+            Some phrases should be localised; others may be
+            non-groundable or ambiguous. Evaluation should
+            distinguish correct abstention from a system that
+            abstains on everything.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">04</div>
+          <h3>Image dependence should be tested</h3>
+          <p>
+            Image swaps, controlled phrase interventions, and
+            flip tests probe different behaviours that conventional
+            box-overlap scores may not reveal.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="protocol">
+      <h2>Compositional diagnostic protocol</h2>
+
+      <p class="muted">
+        Four complementary tests designed to diagnose different
+        potential shortcuts and inconsistencies.
+      </p>
+
+      <div class="grid-2">
+        <article class="card">
+          <div class="num">1</div>
+          <h3>Training-set spatial prior</h3>
+          <p>
+            Estimate a class-conditional mean box using training
+            annotations only, then evaluate that fixed prior on
+            held-out examples. Compare it with model performance
+            under the same split and metric.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">2</div>
+          <h3>Image-swap sensitivity</h3>
+          <p>
+            Compare a matched image with an appropriate mismatched
+            image. Measure whether localisation quality changes
+            in response to the image, while controlling for class
+            and phrase where possible.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">3</div>
+          <h3>Truth-checked phrase interventions</h3>
+          <p>
+            Change pathology, anatomy, or laterality while holding
+            the image fixed. Evaluate only interventions with
+            defensible targets; distinguish supported, contradicted,
+            and ambiguous cases.
+          </p>
+        </article>
+
+        <article class="card">
+          <div class="num">4</div>
+          <h3>Left–right flip equivariance</h3>
+          <p>
+            Horizontally flip the image and switch left/right in
+            the phrase. Check whether the predicted region transforms
+            consistently with the image and the revised phrase.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="method">
+      <h2>COMPOSE</h2>
+
+      <p>
+        COMPOSE investigates training objectives and evaluation
+        measures intended to complement standard phrase-grounding
+        metrics.
+      </p>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3>Displacement-based objective</h3>
+          <p>
+            For valid paired phrases, compare the change in predicted
+            box location with the corresponding change in reference
+            location. The objective is intended to discourage
+            predictions that remain fixed when a valid intervention
+            requires a spatial change.
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Binding Score</h3>
+          <p>
+            A composite score designed to bring together localisation
+            quality, image-swap sensitivity, flip consistency, and
+            resistance to confident predictions on contradicted
+            phrases. Component metrics should also be reported
+            separately.
+          </p>
+        </article>
+      </div>
+
+      <div class="callout">
+        <strong>Evaluation principle:</strong>
+        no single score is sufficient evidence of genuine visual
+        grounding. COMPOSE diagnostics should be interpreted jointly,
+        with explicit degenerate baselines and held-out evaluation.
+      </div>
+    </section>
+
+    <section class="section" id="results">
+      <h2>Preliminary diagnostic result</h2>
+
+      <p>
+        The current write-up reports a class-conditional training-set
+        mean-box baseline for cardiomegaly. This baseline uses the
+        class label but does not inspect test-image pixels when
+        placing its box.
+      </p>
+
+      <div class="result-box">
+        <span class="result-number">56.5 mIoU</span>
+        <span class="result-label">
+          Reported cardiomegaly score for the training-derived
+          class-conditional mean-box baseline
+        </span>
+      </div>
+
+      <p class="muted" style="font-size:13px; margin-top:14px;">
+        Before presenting this number as a headline result, ensure
+        the training-only prior, held-out patient split, reference
+        metric, and comparison baselines are fully aligned and
+        documented. Do not describe a comparator as the “best
+        published model” unless that ranking has been checked across
+        all relevant entries and evaluation protocols.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Evaluation item</th>
+              <th>What it tests</th>
+              <th>Status on this page</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>Training-derived mean-box prior</td>
+              <td>Performance available from a class-conditional spatial prior</td>
+              <td><span class="tag">56.5 mIoU reported</span></td>
+            </tr>
+
+            <tr>
+              <td>Image-swap sensitivity</td>
+              <td>Whether predictions respond to the input image</td>
+              <td>Report final evaluated value</td>
+            </tr>
+
+            <tr>
+              <td>Phrase interventions</td>
+              <td>Whether relevant phrase changes are reflected in localisation</td>
+              <td>Report final evaluated value</td>
+            </tr>
+
+            <tr>
+              <td>Flip equivariance</td>
+              <td>Consistency under image flip and laterality swap</td>
+              <td>Report final evaluated value</td>
+            </tr>
+
+            <tr>
+              <td>COMPOSE model comparison</td>
+              <td>Model performance relative to controlled baselines</td>
+              <td>Add results from the final evaluation table</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section" id="datasets">
+      <h2>Data and evaluation</h2>
+
+      <p>
+        The study evaluates chest X-ray phrase grounding using
+        benchmarks including MS-CXR and PadChest-GR, with Chest
+        ImaGenome used for anatomical-region supervision and
+        prior analysis. Patient-level separation and a frozen
+        test set are important for interpreting spatial-prior
+        and intervention results.
+      </p>
+
+      <div class="callout">
+        Dataset access and use remain subject to each dataset's
+        licence and access conditions. This project page does not
+        redistribute dataset images.
+      </div>
+    </section>
+
+    <section class="section" id="resources">
+      <h2>Resources</h2>
+
+      <div class="grid-2">
+        <article class="card">
+          <h3>Code</h3>
+          <p>
+            Project repository for implementation, evaluation
+            scripts, and updates.
+          </p>
+          <p style="margin-top:12px">
+            <a href="https://github.com/prantik-pdeb/compose-cxr-grounding"
+               target="_blank" rel="noopener noreferrer">
+              Open GitHub repository ↗
+            </a>
+          </p>
+        </article>
+
+        <article class="card">
+          <h3>Paper and model</h3>
+          <p>
+            Paper PDF, model weights, and a final BibTeX citation
+            will be linked here when the corresponding resources
+            are ready to share.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section" id="citation">
+      <h2>Citation</h2>
+      <p class="muted">
+        Citation details are not included until the paper's final
+        bibliographic information is available. Please check this
+        section again after publication or preprint release.
+      </p>
+    </section>
+
+    <footer>
+      <p>COMPOSE · Compositional Medical Phrase Grounding</p>
+      <p>IIIT Hyderabad · NIMS, Hyderabad · University of Strasbourg</p>
+      <p>Project page maintained by the authors.</p>
+    </footer>
+
+  </main>
+</body>
+</html>
